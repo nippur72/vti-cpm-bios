@@ -30,7 +30,11 @@ int main(void) {
     vti_call_fn vti_init_call;
 
     printf("\r\n===================================================\r\n");
+#ifndef BOARD_VDM1
     printf(" Polymorphic VTI - Installatore Patch BIOS CP/M\r\n");
+#else
+    printf(" Processor Tech VDM-1 - Installatore Patch BIOS CP/M\r\n");
+#endif
     printf("===================================================\r\n");
 
     /* 1. Calcolo dinamico della base del BIOS dal vettore di Warm Boot in Page Zero (0x0001) */
@@ -40,7 +44,11 @@ int main(void) {
 
     printf("  Indirizzo Base BIOS:      0x%04X\r\n", bios_base);
     printf("  Vettore BIOS CONOUT:      0x%04X\r\n", conout_vec);
+#ifndef BOARD_VDM1
     printf("  Base Video RAM VTI:       0x%04X\r\n", VTI_BASE);
+#else
+    printf("  Base Video RAM VDM-1:     0x%04X\r\n", VTI_BASE);
+#endif
     printf("  RAM Driver Residente:     0x%04X (Dimensione: %u byte)\r\n", TSR_BASE, vti_tsr_size);
 
     /* 2. Verifica della validita' del vettore CONOUT nel BIOS */

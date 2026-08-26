@@ -2,15 +2,17 @@
 setlocal
 
 REM =============================================================================
-REM mk_gp.bat - Compilazione per Ambiente di Prova / Emulatore Z80
+REM mk_gp_altair.bat - Compilazione per Emulatore Z80 (Profilo Altair / VDM-1)
 REM
 REM Configurazione:
+REM   - Scheda Video: Processor Technology VDM-1 (-DBOARD_VDM1)
+REM   - Cursore: Video inverso dinamico (XOR 80h)
 REM   - Driver residente TSR a 0x5000h (TSR_BASE_HI=0x50)
-REM   - Memoria Video VTI a 0xC000h   (VTI_BASE_HI=0xC0)
+REM   - Memoria Video VRAM a 0xC000h   (VTI_BASE_HI=0xC0)
 REM
 REM Genera:
-REM   1. dist\vti.com     -> Installer patch BIOS per ambiente di test (TSR a 0x5000h)
-REM   2. dist\testvti.com -> Test standalone interattivo (VTI a 0xC000h)
+REM   1. dist\vdm1.com     -> Installer patch BIOS per emulatore (TSR a 0x5000h, VDM-1 a 0xC000h)
+REM   2. dist\testvdm1.com -> Test standalone interattivo (VDM-1 a 0xC000h)
 REM =============================================================================
 
 REM Rileva automaticamente la presenza del compilatore Z88DK nel PATH
@@ -34,14 +36,14 @@ if not exist dist mkdir dist
 
 echo.
 echo ==========================================================
-echo  Building VTI.COM and TESTVTI.COM for Test Environment
-echo  (Driver at 5000h, VTI VRAM at C000h)
+echo  Building VDM1.COM and TESTVDM1.COM for GP Emulator (Altair)
+echo  (Processor Tech VDM-1 at C000h, Driver at 5000h)
 echo ==========================================================
 echo.
 
-REM Passo 1: Assembla il driver residente con origine a 0x5000h
+REM Passo 1: Assembla il driver residente con origine a 0x5000h (configurazione VDM-1)
 echo [1/3] Assembling resident TSR driver (src\vti_tsr.bin)...
-z80asm -m8080 -b -o=src\vti_tsr.bin -DBUILD_TSR -DTSR_BASE_HI=0x50 -DVTI_BASE_HI=0xC0 src\vti_conout.asm
+z80asm -m8080 -b -o=src\vti_tsr.bin -DBUILD_TSR -DBOARD_VDM1 -DTSR_BASE_HI=0x50 -DVTI_BASE_HI=0xC0 src\vti_conout.asm
 if errorlevel 1 (
     echo [ERROR] Failed to assemble src\vti_conout.asm!
     exit /b 1
@@ -55,25 +57,25 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM Passo 3: Compila l'installer VTI.COM per l'ambiente di test (TSR a 0x5000h, VTI a 0xC000h)
-echo [3/3] Compiling dist\vti.com (Installer)...
-zcc +cpm -clib=8080 -O3 -vn -create-app -Isrc -DTSR_BASE_HI=0x50 -DVTI_BASE_HI=0xC0 src\vti.c -o dist\vti.com
+REM Passo 3: Compila l'installer VDM1.COM per l'ambiente di test Altair/VDM-1 (TSR a 0x5000h, VDM-1 a 0xC000h)
+echo [3/3] Compiling dist\vdm1.com (Installer)...
+zcc +cpm -clib=8080 -O3 -vn -create-app -Isrc -DBOARD_VDM1 -DTSR_BASE_HI=0x50 -DVTI_BASE_HI=0xC0 src\vti.c -o dist\vdm1.com
 if errorlevel 1 (
     echo [ERROR] Failed to compile src\vti.c!
     exit /b 1
 )
 
-REM Passo 4: Compila il test standalone TESTVTI.COM configurato per VTI a 0xC000h
-echo Compiling dist\testvti.com for test environment...
-zcc +cpm -clib=8080 -O3 -vn -create-app -Isrc -DVTI_BASE_HI=0xC0 -Ca-DVTI_BASE_HI=0xC0 src\test_vti.c src\vti_conout.asm -o dist\testvti.com
+REM Passo 4: Compila il test standalone TESTVDM1.COM configurato per VDM-1 a 0xC000h
+echo Compiling dist\testvdm1.com for GP emulator (Altair/VDM-1)...
+zcc +cpm -clib=8080 -O3 -vn -create-app -Isrc -DBOARD_VDM1 -DVTI_BASE_HI=0xC0 -Ca-DBOARD_VDM1 -Ca-DVTI_BASE_HI=0xC0 src\test_vti.c src\vti_conout.asm -o dist\testvdm1.com
 if errorlevel 1 (
     echo [ERROR] Failed to compile src\test_vti.c!
     exit /b 1
 )
 
 echo.
-echo [SUCCESS] Test build completed successfully!
+echo [SUCCESS] Build for GP Emulator (Altair/VDM-1) completed successfully!
 echo Generated files:
-echo   - dist\vti.com     (Installer con TSR a 5000h, VTI a C000h)
-echo   - dist\testvti.com (Test interattivo con VTI a C000h)
+echo   - dist\vdm1.com     (Installer con TSR a 5000h, VDM-1 a C000h)
+echo   - dist\testvdm1.com (Test interattivo con VDM-1 a C000h)
 echo.

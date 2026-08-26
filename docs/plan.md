@@ -1,24 +1,33 @@
-# Piano di Progetto Definitivo: VTI CP/M BIOS Patch per IMSAI 8800
+# Piano di Progetto Definitivo: CP/M BIOS Patch per Schede Video S-100 (VTI e VDM-1)
 
-Questo documento definisce il piano architetturale, tecnico e operativo per abilitare l'output video su scheda grafica **Polymorphic Systems VTI-64** (Video Terminal Interface) installata su un sistema **IMSAI 8800** (Intel 8080) con **CP/M 2.2b**.
+Questo documento definisce il piano architetturale, tecnico e operativo per abilitare l'output video su schede grafiche memory-mapped per bus S-100 con **CP/M 2.2b** (Intel 8080 / Z80), specificamente tarato per:
+1. **IMSAI 8800** con scheda **Polymorphic Systems VTI-64** (VRAM a `0xE800`)
+2. **Altair 8800** con scheda **Processor Technology VDM-1** (VRAM a `0xCC00`)
 
 ---
 
 ## 1. Sintesi e Obiettivi del Progetto
 
-### 1.1 Contesto Operativo
-- **Macchina target**: IMSAI 8800 (CPU Intel 8080 a 2 MHz, bus S-100).
-- **Sistema Operativo**: CP/M 2.2b (Deramp Altair/IMSAI, memoria 56K).
-- **Configurazione I/O seriali**:
-  - *Seriale 1 (2SIO porta 1)*: Console I/O standard (tastiera e terminale).
-  - *Seriale 2 (2SIO porta 2)*: Emulazione Floppy Disk Controller tramite PC proxy.
-- **Controller Floppy S-100**: Scheda **DeRamp FDC+** (Floppy Disk Controller Plus di Mike Douglas):
-  - Integra porta seriale ad alta velocità per collegarsi al Serial Drive Server su PC moderno.
-  - Integra EPROM da `0xF800` a `0xFFFF` contenente il monitor **AMON** (o ALTMON / boot loader) per l'avvio e la diagnostica da pannello frontale o seriale.
-- **Scheda Video**: Polymorphic Systems VTI-64:
-  - Risoluzione testo: 64 caratteri × 16 righe (totale 1024 caratteri).
-  - ROM Caratteri: 256 caratteri (128 ASCII standard + 128 caratteri semigrafici/speciali).
-  - Indirizzamento: Memory-Mapped Video RAM a partire dall'indirizzo esadecimale **`0xE800`** (1024 byte: da `0xE800` a `0xEBFF`).
+### 1.1 Contesto Operativo e Configurazioni Target
+
+- **Configurazione 1: IMSAI 8800 + Polymorphic Systems VTI-64**:
+  - **Macchina target**: IMSAI 8800 (CPU Intel 8080 a 2 MHz, bus S-100).
+  - **Sistema Operativo**: CP/M 2.2b (Deramp 56K).
+  - **Scheda Video**: Polymorphic Systems VTI-64 (64 caratteri × 16 righe, 1024 byte).
+  - **Indirizzamento VRAM**: Memory-Mapped a partire dall'indirizzo **`0xE800`** (`0xE800` - `0xEBFF`).
+  - **Driver Residente TSR**: Caricato in RAM alta a **`0xE000`** (`0xE000` - `0xE159`).
+  - **Set Caratteri**: ROM alfanumerica con bit 7 abilitato (`OR 80h`), sfondo con spazio `$A0` ($128+32$), cursore grafico solido `$00`.
+
+- **Configurazione 2: Altair 8800 + Processor Technology VDM-1**:
+  - **Macchina target**: Altair 8800 (CPU Intel 8080 a 2 MHz, bus S-100).
+  - **Sistema Operativo**: CP/M 2.2b.
+  - **Scheda Video**: Processor Technology VDM-1 (64 caratteri × 16 righe, 1024 byte).
+  - **Indirizzamento VRAM**: Memory-Mapped a partire dall'indirizzo **`0xCC00`** (`0xCC00` - `0xCFFF`).
+  - **Driver Residente TSR**: Caricato in RAM alta a **`0xE000`** (`0xE000` - `0xE159`).
+  - **Set Caratteri**: ASCII standard a 7 bit (`$20..$7E`), sfondo con spazio `$20`, cursore dinamico in **video inverso** (`carattere XOR 80h`).
+
+- **Configurazione 3: Ambiente di Prova su Emulatore Z80 (GP)**:
+  - Permette di collaudare sia il profilo **IMSAI/VTI** sia il profilo **Altair/VDM-1** con VRAM a **`0xC000`** e driver TSR a **`0x5000`**.
 
 ### 1.2 Problema Risolto
 Attualmente il sistema opera esclusivamente via console seriale. La scheda VTI funziona solo se indirizzata direttamente da programmi custom. Il BIOS del CP/M non la riconosce, quindi l'output di BDOS/CCP e di tutti i software standard CP/M (`DIR`, `STAT`, `ED`, `MBASIC`, ecc.) non appare a schermo.
@@ -230,43 +239,25 @@ Invece di eseguire test scriptati rigidi, `TESTVTI.COM` implementa un **terminal
 
 ---
 
-## 7. Script di Compilazione Windows (`mk.bat` e `mktest.bat`)
+## 7. Script di Compilazione Windows
 
-I due file batch Windows includono il rilevamento automatico dell'ambiente Z88DK (invocando `env.bat` se `zcc` non è ancora nel PATH di sistema):
+Gli script batch Windows nella root integrano il rilevamento automatico dell'ambiente Z88DK (invocando `env.bat` se `zcc` non è ancora nel PATH di sistema):
 
-### 7.1 `mk.bat` (Per Hardware Reale IMSAI 8800)
+### 7.1 `mk_imsai.bat` (Per Hardware Reale IMSAI 8800 con Polymorphic VTI)
 - Configura `VTI_BASE_HI = 0xE8` (VRAM a `0xE800`) e `TSR_BASE_HI = 0xE0` (Driver residente a `0xE000`).
-- Genera l'installer finale **`dist\vti.com`** e il test **`dist\testvti.com`** per macchina reale:
-  ```cmd
-  @echo off
-  where zcc >nul 2>&1
-  if not errorlevel 1 goto has_zcc
-  if exist "%USERPROFILE%\Desktop\USB\z80\test_z88dk\env.bat" call "%USERPROFILE%\Desktop\USB\z80\test_z88dk\env.bat"
-  :has_zcc
-  if not exist dist mkdir dist
+- Genera l'installer **`dist\vti.com`** e il test **`dist\testvti.com`** per IMSAI 8800.
 
-  z80asm -m8080 -b -o=src\vti_tsr.bin -DBUILD_TSR -DTSR_BASE_HI=0xE0 -DVTI_BASE_HI=0xE8 src\vti_conout.asm
-  powershell -NoProfile -Command "$b=[System.IO.File]::ReadAllBytes('src\vti_tsr.bin'); $h=($b|ForEach-Object{'0x{0:X2}'-f $_})-join ','; [System.IO.File]::WriteAllText('src\vti_tsr.h', 'static const unsigned char vti_tsr_bin[] = {' + $h + '};' + [Environment]::NewLine + 'static const unsigned int vti_tsr_size = ' + $b.Length + ';' + [Environment]::NewLine)"
-  zcc +cpm -clib=8080 -O3 -vn -create-app -Isrc -DTSR_BASE_HI=0xE0 -DVTI_BASE_HI=0xE8 src\vti.c -o dist\vti.com
-  zcc +cpm -clib=8080 -O3 -vn -create-app -Isrc -DVTI_BASE_HI=0xE8 src\test_vti.c src\vti_conout.asm -o dist\testvti.com
-  ```
+### 7.2 `mk_altair.bat` (Per Hardware Reale Altair 8800 con Processor Technology VDM-1)
+- Configura `BOARD_VDM1`, `VTI_BASE_HI = 0xCC` (VRAM a `0xCC00`) e `TSR_BASE_HI = 0xE0` (Driver residente a `0xE000`).
+- Genera l'installer **`dist\vti.com`** e il test **`dist\testvti.com`** per Altair 8800.
 
-### 7.2 `mktest.bat` (Per Ambiente di Prova / Emulatore Z80)
-- Configura `TSR_BASE_HI = 0x50` (Driver residente a `0x5000`) e `VTI_BASE_HI = 0xC0` (VRAM a `0xC000`).
-- Genera sia l'installer **`dist\vti.com`** che il test standalone **`dist\testvti.com`**:
-  ```cmd
-  @echo off
-  where zcc >nul 2>&1
-  if not errorlevel 1 goto has_zcc
-  if exist "%USERPROFILE%\Desktop\USB\z80\test_z88dk\env.bat" call "%USERPROFILE%\Desktop\USB\z80\test_z88dk\env.bat"
-  :has_zcc
-  if not exist dist mkdir dist
+### 7.3 `mk_gp_imsai.bat` (Per Emulatore Z80 GP - Profilo IMSAI / VTI)
+- Configura `VTI_BASE_HI = 0xC0` (VRAM a `0xC000`) e `TSR_BASE_HI = 0x50` (Driver residente a `0x5000`).
+- Genera i binari per collaudo rapido su emulatore con emulazione scheda VTI.
 
-  z80asm -m8080 -b -o=src\vti_tsr.bin -DBUILD_TSR -DTSR_BASE_HI=0x50 -DVTI_BASE_HI=0xC0 src\vti_conout.asm
-  powershell -NoProfile -Command "$b=[System.IO.File]::ReadAllBytes('src\vti_tsr.bin'); $h=($b|ForEach-Object{'0x{0:X2}'-f $_})-join ','; [System.IO.File]::WriteAllText('src\vti_tsr.h', 'static const unsigned char vti_tsr_bin[] = {' + $h + '};' + [Environment]::NewLine + 'static const unsigned int vti_tsr_size = ' + $b.Length + ';' + [Environment]::NewLine)"
-  zcc +cpm -clib=8080 -O3 -vn -create-app -Isrc -DTSR_BASE_HI=0x50 -DVTI_BASE_HI=0xC0 src\vti.c -o dist\vti.com
-  zcc +cpm -clib=8080 -O3 -vn -create-app -Isrc -DVTI_BASE_HI=0xC0 -Ca-DVTI_BASE_HI=0xC0 src\test_vti.c src\vti_conout.asm -o dist\testvti.com
-  ```
+### 7.4 `mk_gp_altair.bat` (Per Emulatore Z80 GP - Profilo Altair / VDM-1)
+- Configura `BOARD_VDM1`, `VTI_BASE_HI = 0xC0` (VRAM a `0xC000`) e `TSR_BASE_HI = 0x50` (Driver residente a `0x5000`).
+- Genera i binari per collaudo rapido su emulatore con emulazione scheda VDM-1 (video inverso).
 
 ---
 

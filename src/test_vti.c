@@ -24,12 +24,21 @@ int main(void) {
 
     /* Stampa del messaggio informativo sulla console seriale di CP/M */
     printf("\r\n=========================================\r\n");
+#ifndef BOARD_VDM1
     printf(" Polymorphic VTI - Test Interattivo\r\n");
     printf(" Indirizzo Video RAM: 0x%04X\r\n", VTI_BASE);
     printf("=========================================\r\n");
     printf("Digita liberamente da tastiera per testare l'output su VTI.\r\n");
     printf("Funzionalita' verificabili:\r\n");
     printf("  - Testo e cursore grafico a blocco ($00)\r\n");
+#else
+    printf(" Processor Tech VDM-1 - Test Interattivo\r\n");
+    printf(" Indirizzo Video RAM: 0x%04X\r\n", VTI_BASE);
+    printf("=========================================\r\n");
+    printf("Digita liberamente da tastiera per testare l'output su VDM-1.\r\n");
+    printf("Funzionalita' verificabili:\r\n");
+    printf("  - Testo ASCII e cursore dinamico in video inverso (XOR 80h)\r\n");
+#endif
     printf("  - Line wrapping oltre la colonna 63\r\n");
     printf("  - Invio (CR/LF) e Backspace\r\n");
     printf("  - Tabulazione (multipli di 8 colonne)\r\n");

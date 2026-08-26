@@ -19,9 +19,17 @@
     DEFC VTI_BASE = (VTI_BASE_HI * 256)
     DEFC TSR_BASE = (TSR_BASE_HI * 256)
 
-    ; Costanti specifiche della Polymorphic VTI
+    ; Costanti specifiche della scheda (Polymorphic VTI vs Processor Technology VDM-1)
+    IFNDEF BOARD_VDM1
+    ; === Configurazione Polymorphic Systems VTI ===
     DEFC VTI_CHAR_CURSOR = 000h     ; Carattere grafico a blocco pieno per il cursore
     DEFC VTI_CHAR_BLANK  = 0A0h     ; Spazio vuoto VTI (128 + 32)
+    ELSE
+    ; === Configurazione Processor Technology VDM-1 ===
+    DEFC VTI_CHAR_CURSOR = 0A0h     ; Spazio con bit 7 (video inverso) = blocco pieno
+    DEFC VTI_CHAR_BLANK  = 020h     ; Spazio ASCII standard a 7 bit
+    ENDIF
+
     DEFC VTI_COLS        = 64       ; Colonne per riga
     DEFC VTI_ROWS        = 16       ; Righe dello schermo
 
@@ -63,9 +71,9 @@ vti_cur_x:
 vti_cur_y:
     db 00h
 
-    ; Offset +0Bh: Carattere originario sottostante il cursore (1 byte, default 0xA0)
+    ; Offset +0Bh: Carattere originario sottostante il cursore (1 byte, default VTI_CHAR_BLANK)
 vti_cur_char:
-    db 0A0h
+    db VTI_CHAR_BLANK
 
 ;------------------------------------------------------------------------------
 ; vti_conout_hook - Routine di aggancio (hook) del vettore CONOUT del BIOS
@@ -133,7 +141,9 @@ vti_putc_c:
     ld a, (vti_cur_y)
     call calc_addr      ; HL = VTI_BASE + (Y * 64) + X
     ld a, c
-    or 80h              ; Imposta il bit 7 (ASCII + 128) per i caratteri alfanumerici della ROM VTI
+    IFNDEF BOARD_VDM1
+    or 80h              ; Su VTI: imposta il bit 7 (ASCII + 128) per i caratteri alfanumerici della ROM
+    ENDIF
     ld (hl), a          ; Scrive il codice carattere nella Video RAM VTI
 
     ; Avanzamento del cursore orizzontale X
@@ -234,8 +244,13 @@ draw_cursor:
     call get_cur_addr   ; HL = indirizzo VRAM (cur_x, cur_y)
     ld a, (hl)
     ld (vti_cur_char), a ; Salva il carattere originario prima di sovrascriverlo
+    IFNDEF BOARD_VDM1
     ld a, VTI_CHAR_CURSOR
-    ld (hl), a          ; Disegna il blocco pieno del cursore ($00)
+    ld (hl), a          ; Disegna il blocco pieno del cursore ($00) su VTI
+    ELSE
+    xor 80h             ; Inverte il bit 7 su VDM-1 (video inverso dinamico del carattere o spazio)
+    ld (hl), a
+    ENDIF
     ret
 
 ;------------------------------------------------------------------------------
