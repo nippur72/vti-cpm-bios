@@ -2,7 +2,7 @@
 setlocal
 
 REM =============================================================================
-REM mk.bat - Compilazione per Hardware Reale IMSAI 8800 con CP/M 2.2b
+REM mk_imsai.bat - Compilazione per Hardware Reale IMSAI 8800 con CP/M 2.2b
 REM
 REM Scopo:
 REM   Genera i due eseguibili CP/M per la macchina reale:
