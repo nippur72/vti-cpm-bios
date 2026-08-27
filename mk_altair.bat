@@ -50,7 +50,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM Passo 2: Converte il binario generato (345 byte) in un header C (vti_tsr.h)
+REM Passo 2: Converte il binario generato in un header C (vti_tsr.h)
 echo [2/3] Generating src\vti_tsr.h header...
 powershell -NoProfile -Command "$b=[System.IO.File]::ReadAllBytes('src\vti_tsr.bin'); $h=($b|ForEach-Object{'0x{0:X2}'-f $_})-join ','; [System.IO.File]::WriteAllText('src\vti_tsr.h', 'static const unsigned char vti_tsr_bin[] = {' + $h + '};' + [Environment]::NewLine + 'static const unsigned int vti_tsr_size = ' + $b.Length + ';' + [Environment]::NewLine)"
 if errorlevel 1 (

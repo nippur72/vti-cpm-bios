@@ -19,9 +19,9 @@
 #include <cpm.h>
 #include "vti.h"
 
-int main(void) {
-    uint8_t ch;
+static uint8_t ch;
 
+int main(void) {
     /* Stampa del messaggio informativo sulla console seriale di CP/M */
     printf("\r\n=========================================\r\n");
 #ifndef BOARD_VDM1
@@ -46,7 +46,14 @@ int main(void) {
     printf("  - Scrolling verticale oltre la 16a riga\r\n\r\n");
     printf("Premi [ESC] o [Ctrl+C] per uscire e tornare al CP/M.\r\n\r\n");
 
-    /* Pulisce lo schermo della VTI e posiziona il cursore a (0,0) */
+    /* Pulisce lo schermo e posiziona il cursore a (0,0) */
+#ifdef BOARD_VDM1
+    /* Resetta il registro di scorrimento hardware e window-shade della VDM-1 (porta C8h) */
+    #asm
+    xor a
+    out (0C8h), a
+    #endasm
+#endif
     vti_conout_direct(0x0C); /* FormFeed / CLS */
 
     /* Loop del terminale trasparente (Glass TTY) */

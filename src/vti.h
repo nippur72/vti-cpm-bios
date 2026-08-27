@@ -24,6 +24,10 @@
 #define VTI_BASE_HI 0xE8
 #endif
 
+#ifndef VDM_PORT_CTRL
+#define VDM_PORT_CTRL   0xC8    /* Porta I/O di controllo e scorrimento hardware VDM-1 */
+#endif
+
 #define TSR_BASE        ((uint16_t)(TSR_BASE_HI << 8))
 #define VTI_BASE        ((uint16_t)(VTI_BASE_HI << 8))
 

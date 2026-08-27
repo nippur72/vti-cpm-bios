@@ -17,7 +17,7 @@ La seguente tabella descrive l'allocazione dello spazio di indirizzamento a 16 b
 | `0xC700` - `0xDFFF`  | 6.25 KB    | **BIOS CP/M 2.2b** (Deramp 56K per Altair/IMSAI 8800, include buffer traccia) |
 | **`0xE000` - `0xE7FF`**| **2.0 KB** | **Area RAM Libera: Destinazione Driver Residente TSR (`vti_conout.asm`)** |
 | **`0xE800` - `0xEBFF`**| **1.0 KB** | **Memory-Mapped VRAM Scheda Polymorphic VTI-64 (su IMSAI 8800)** |
-| **`0xCC00` - `0xCFFF`**| **1.0 KB** | **Memory-Mapped VRAM Scheda Processor Tech VDM-1 (su Altair 8800)** |
+| **`0xCC00` - `0xCFFF`**| **1.0 KB** | **Memory-Mapped VRAM Scheda Processor Tech VDM-1 (su Altair 8800 con CP/M <= 48K)** |
 | `0xEC00` - `0xF7FF`  | 3.0 KB     | Area RAM libera / Espansioni bus S-100 |
 | **`0xF800` - `0xFFFF`**| **2.0 KB** | **EPROM Scheda DeRamp FDC+**: Monitor di boot **AMON** / ALTMON / Serial Drive Server |
 

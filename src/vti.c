@@ -75,7 +75,14 @@ int main(void) {
     old_conout_slot = (uint16_t *)(tsr_dest + TSR_OFFSET_OLD_CONOUT_ADDR);
     *old_conout_slot = old_conout;
 
-    /* 6. Inizializza lo schermo VTI (pulizia con spazi $A0 e cursore a 0,0) */
+    /* 6. Inizializza lo schermo (pulizia con spazi e cursore a 0,0) */
+#ifdef BOARD_VDM1
+    /* Resetta il registro di scorrimento hardware e window-shade della VDM-1 (porta C8h) */
+    #asm
+    xor a
+    out (0C8h), a
+    #endasm
+#endif
     vti_init_call = (vti_call_fn)(tsr_dest + TSR_OFFSET_DIRECT);
     vti_init_call(0x0C); /* Invia FormFeed / Clear Screen */
 

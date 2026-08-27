@@ -28,6 +28,9 @@
     ; === Configurazione Processor Technology VDM-1 ===
     DEFC VTI_CHAR_CURSOR = 0A0h     ; Spazio con bit 7 (video inverso) = blocco pieno
     DEFC VTI_CHAR_BLANK  = 020h     ; Spazio ASCII standard a 7 bit
+    IFNDEF VDM_PORT_CTRL
+    DEFC VDM_PORT_CTRL   = 0C8h     ; Porta I/O di controllo / scroll hardware VDM-1
+    ENDIF
     ENDIF
 
     DEFC VTI_COLS        = 64       ; Colonne per riga
@@ -209,6 +212,10 @@ tab_ok:
 
 handle_ff:
     ; Form Feed (Ctrl+L): pulisce l'intero schermo e resetta il cursore a (0,0)
+    IFDEF BOARD_VDM1
+    xor a
+    out (VDM_PORT_CTRL), a ; Resetta lo scroll hardware della VDM-1 (riga 0 in cima, no window-shade)
+    ENDIF
     call vti_clear_screen
     ld a, 0
     ld (vti_cur_x), a
@@ -365,6 +372,10 @@ clear_last_row:
 ;------------------------------------------------------------------------------
 _vti_init:
 vti_init:
+    IFDEF BOARD_VDM1
+    xor a
+    out (VDM_PORT_CTRL), a ; Resetta lo scroll hardware della VDM-1 (riga 0 in cima, no window-shade)
+    ENDIF
     call vti_clear_screen
     ld a, 0
     ld (vti_cur_x), a
